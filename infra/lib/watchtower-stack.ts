@@ -16,6 +16,7 @@ import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as logs from "aws-cdk-lib/aws-logs";
 
 export interface WatchtowerStackProps extends StackProps {
   ringClientId: string;
@@ -23,8 +24,11 @@ export interface WatchtowerStackProps extends StackProps {
   ringHmacSigningKey: string;
   /** Verified SES "From" address used to send passwordless sign-in codes. */
   sesFromEmail: string;
-  /** Secret used to sign the httpOnly dashboard session cookie. */
-  sessionSecret: string;
+  /**
+   * Optional key for the httpOnly dashboard session cookie. When omitted, the
+   * backend derives one from the Ring client secret.
+   */
+  sessionSecret?: string;
 }
 
 /**
@@ -32,6 +36,7 @@ export interface WatchtowerStackProps extends StackProps {
  *   - 1 DynamoDB table (single-table design + StatusIndex GSI + TTL)
  *   - 1 Lambda (the Express backend, bundled with esbuild; frontend dist copied in)
  *   - 1 HTTP API Gateway proxying everything to the Lambda
+ *   - 1 CloudWatch log group (30-day retention)
  */
 export class WatchtowerStack extends Stack {
   constructor(scope: Construct, id: string, props: WatchtowerStackProps) {
@@ -58,10 +63,25 @@ export class WatchtowerStack extends Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
+    // ── Logs ─────────────────────────────────────────────────────────────────
+    // Owned by the stack, so logs expire after 30 days and `npm run destroy`
+    // deletes them. (Without this, Lambda creates its own log group that
+    // keeps logs forever and survives teardown.) Logs hold Ring account and
+    // camera IDs, so keep retention short and match it in PRIVACY.md.
+    // The name deliberately isn't Lambda's default (/aws/lambda/<function>):
+    // that group may already exist from an earlier deploy, and a running
+    // Lambda can recreate it at any moment, which would make this deploy fail.
+    const logGroup = new logs.LogGroup(this, "ApiLogs", {
+      logGroupName: "/watchtower-sample/api",
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     // ── Lambda (Express backend) ─────────────────────────────────────────────
     const fn = new NodejsFunction(this, "ApiFunction", {
       functionName: "watchtower-sample-api",
       runtime: lambda.Runtime.NODEJS_22_X,
+      logGroup,
       entry: path.join(backendDir, "lambda.js"),
       handler: "handler",
       memorySize: 512,
@@ -73,8 +93,9 @@ export class WatchtowerStack extends Stack {
         RING_HMAC_SIGNING_KEY: props.ringHmacSigningKey,
         // Verified SES sender for passwordless sign-in code emails.
         SES_FROM_EMAIL: props.sesFromEmail,
-        // Secret for signing the httpOnly dashboard session cookie.
-        SESSION_SECRET: props.sessionSecret,
+        // Optional session-cookie key; without it the backend derives one
+        // from RING_CLIENT_SECRET.
+        ...(props.sessionSecret ? { SESSION_SECRET: props.sessionSecret } : {}),
         // The Lambda serves the SPA itself, so the frontend origin is "" (same origin).
         FRONTEND_URL: "",
       },

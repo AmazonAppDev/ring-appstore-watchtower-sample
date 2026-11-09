@@ -4,6 +4,36 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- `SESSION_SECRET` is no longer needed. The session-cookie key is derived from `RING_CLIENT_SECRET`
+  by default, so there's one less value to set. Before, a reader who left the public example value
+  in `.env` deployed a session key anyone could read, which would let them forge sign-in sessions.
+  `SESSION_SECRET` still works as an optional override (at least 32 characters).
+- The deploy stops if a value in `.env` is still the example from `.env.example`.
+
+> Upgrading from 1.1.0: if you remove `SESSION_SECRET` from `.env`, existing dashboard sessions
+> end and customers sign in again with an email code.
+
+### Changed
+
+- The stack owns the Lambda's log group, `/watchtower-sample/api`: logs expire after 30 days and
+  `npm run destroy` deletes them. `PRIVACY.md` states the retention.
+- README: step 5 adds a one-time `npm run bootstrap` (the global CDK install is no longer needed).
+  Tear-down explains what's removed and what to do in the Ring Developer Portal.
+
+### Upgrading from 1.1.0
+
+Logs now go to `/watchtower-sample/api`. The old group Lambda created in 1.1.0,
+`/aws/lambda/watchtower-sample-api`, is no longer written to, and it keeps its logs with no expiry.
+After you deploy, delete it (this deletes its old logs):
+
+```bash
+aws logs delete-log-group --log-group-name /aws/lambda/watchtower-sample-api
+```
+
 ## [1.1.0] - 2026-11-06
 
 Initial public release.
@@ -58,4 +88,5 @@ Initial public release.
   intentional gap: no scheduled token refresh job), CONTRIBUTING, CODE_OF_CONDUCT, SECURITY,
   SUPPORT, third-party notices, issue and PR templates, and CI.
 
+[Unreleased]: https://github.com/AmazonAppDev/ring-appstore-watchtower-sample/compare/v1.1.0...HEAD
 [1.1.0]: https://github.com/AmazonAppDev/ring-appstore-watchtower-sample/releases/tag/v1.1.0

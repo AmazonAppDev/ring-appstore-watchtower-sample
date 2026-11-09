@@ -26,6 +26,7 @@
     "dev:backend": "npm run dev --workspace backend",
     "dev:frontend": "npm run dev --workspace frontend",
     "build": "npm run build --workspace frontend",
+    "bootstrap": "npm run bootstrap --workspace infra",
     "deploy": "npm run build && npm run deploy --workspace infra",
     "destroy": "npm run destroy --workspace infra"
   },

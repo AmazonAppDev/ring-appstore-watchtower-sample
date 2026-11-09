@@ -60,7 +60,7 @@ We don't sell your data or share it with anyone else, except where the law requi
 | Pending link (before you finish connecting) | 15 minutes |
 | Sign-in codes | Used, or 10 minutes, whichever comes first |
 | Webhook delivery IDs | 24 hours |
-| Service logs | **[Retention period, for example 30 days]**. *Publishers: the sample doesn't set a CloudWatch log retention, and the default is "never expire". Set one.* |
+| Service logs | 30 days. *Publishers: this is the sample's setting (`retention` in `infra/lib/watchtower-stack.ts`); update this row if you change it.* |
 
 ## Your choices: deletion and withdrawing consent
 

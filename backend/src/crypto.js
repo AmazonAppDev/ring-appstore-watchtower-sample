@@ -81,10 +81,10 @@ export function verifyWebhookSignature(rawBody, receivedSignature, signingKey) {
  * Session tokens (dashboard auth)
  *
  * A minimal, dependency-free signed session: "<userId>.<expiresAtMs>.<sig>"
- * where sig = Base64URL( HMAC-SHA256(SESSION_SECRET, "<userId>.<expiresAtMs>") ).
+ * where sig = Base64URL( HMAC-SHA256(sessionKey, "<userId>.<expiresAtMs>") ).
  *
  * The token is stateless (no server-side store) and tamper-proof: a client
- * cannot forge or alter the userId without the server's SESSION_SECRET. It is
+ * cannot forge or alter the userId without the server's session key. It is
  * delivered as an httpOnly, Secure cookie so it is never readable by JS (unlike
  * the old localStorage userId). This is a deliberately small example of a real
  * session mechanism — a production app might use signed JWTs, rotation, and a
@@ -95,24 +95,42 @@ export function verifyWebhookSignature(rawBody, receivedSignature, signingKey) {
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-function sessionSecret() {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) {
-    throw new Error(
-      "Missing SESSION_SECRET. Set a strong random value (e.g. `openssl rand -hex 32`) in .env."
-    );
+// The key that signs every session cookie. By default it's derived from the
+// Ring client secret, so there's nothing extra to configure: the client secret
+// is already a strong secret that only this backend holds, and a one-way HMAC
+// with a fixed label gives a separate key that reveals nothing about it.
+// Set SESSION_SECRET (at least 32 random characters) to use your own key
+// instead, for example so you can sign everyone out by changing it.
+const MIN_SESSION_SECRET_LENGTH = 32;
+const SESSION_KEY_LABEL = "watchtower-session-key-v1";
+let cachedSessionKey;
+
+function sessionKey() {
+  if (cachedSessionKey) return cachedSessionKey;
+  const override = process.env.SESSION_SECRET;
+  if (override) {
+    if (override.length < MIN_SESSION_SECRET_LENGTH) {
+      throw new Error(
+        `SESSION_SECRET must be at least ${MIN_SESSION_SECRET_LENGTH} random characters. ` +
+          "Remove it from .env to use the default key derived from RING_CLIENT_SECRET."
+      );
+    }
+    cachedSessionKey = Buffer.from(override, "utf-8");
+  } else {
+    const clientSecret = process.env.RING_CLIENT_SECRET;
+    if (!clientSecret) {
+      throw new Error("Missing RING_CLIENT_SECRET, which the session key is derived from. Set it in .env.");
+    }
+    cachedSessionKey = crypto.createHmac("sha256", clientSecret).update(SESSION_KEY_LABEL).digest();
   }
-  return secret;
+  return cachedSessionKey;
 }
 
 /** Sign a session token for a user id. Returns the cookie value. */
 export function signSession(userId, ttlMs = SESSION_TTL_MS) {
   const expiresAt = Date.now() + ttlMs;
   const payload = `${userId}.${expiresAt}`;
-  const sig = crypto
-    .createHmac("sha256", Buffer.from(sessionSecret(), "utf-8"))
-    .update(payload)
-    .digest("base64url");
+  const sig = crypto.createHmac("sha256", sessionKey()).update(payload).digest("base64url");
   return `${payload}.${sig}`;
 }
 
@@ -126,10 +144,7 @@ export function verifySession(token) {
   if (parts.length !== 3) return null;
   const [userId, expiresAtStr, sig] = parts;
   const payload = `${userId}.${expiresAtStr}`;
-  const expected = crypto
-    .createHmac("sha256", Buffer.from(sessionSecret(), "utf-8"))
-    .update(payload)
-    .digest("base64url");
+  const expected = crypto.createHmac("sha256", sessionKey()).update(payload).digest("base64url");
   const sigBuf = Buffer.from(sig, "utf-8");
   const expBuf = Buffer.from(expected, "utf-8");
   if (sigBuf.length !== expBuf.length) return null;
