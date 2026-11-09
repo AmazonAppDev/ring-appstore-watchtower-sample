@@ -101,7 +101,8 @@ Add what you need.
 - Works on macOS, Linux, and Windows. On Windows, run the commands below in **PowerShell** (or Git
   Bash); where a shell command differs by platform, both variants are shown.
 - An AWS account and credentials (`aws configure` or `AWS_PROFILE`)
-- [AWS CDK v2](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html) (`npm i -g aws-cdk`)
+- [AWS CDK v2](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html). You don't need to
+  install it: the project includes the CDK CLI, and step 5 runs it for you.
 - Ring Developer credentials: **Client ID**, **Client Secret**, **HMAC Signing Key**
   (from the [Ring Developer Console](https://developer.amazon.com/ring/console/apps); see
   [developer.ring.com](https://developer.ring.com/) to get started)
@@ -164,7 +165,8 @@ Copy-Item .env.example .env
 ```
 
 Then edit `.env` and fill in `RING_CLIENT_ID`, `RING_CLIENT_SECRET`, `RING_HMAC_SIGNING_KEY`, and
-`SES_FROM_EMAIL` (a verified SES sender address).
+`SES_FROM_EMAIL` (a verified SES sender address). The deploy stops with a clear message if any of
+them is still the example value.
 
 ## 4. Install
 
@@ -175,6 +177,15 @@ npm install          # installs root + backend + frontend + infra workspaces
 ```
 
 ## 5. Deploy to AWS
+
+If you've never used the AWS CDK in this AWS account and region, bootstrap it once (this creates
+the resources CDK uses to deploy, such as an S3 bucket for the Lambda code):
+
+```bash
+npm run bootstrap    # once per AWS account and region
+```
+
+Then deploy:
 
 ```bash
 npm run deploy
@@ -226,17 +237,22 @@ single screen.
 
 ## Tear it down
 
-To remove all AWS resources this stack created:
+To remove all AWS resources this stack created, including the DynamoDB table (with every linked
+account's tokens) and the Lambda's logs:
 
 ```bash
 npm run destroy
 ```
 
+Then remove the app's URLs from the Ring Developer Portal, or delete the app there. The CDK
+bootstrap resources from step 5 stay in your account; they're shared by any CDK project.
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `npm run deploy` fails with `This stack uses assets… requires bootstrapping` | The target AWS account/region hasn't been CDK-bootstrapped. | Run `npx cdk bootstrap aws://<account-id>/<region>` once, then redeploy. |
+| `npm run deploy` fails with `This stack uses assets… requires bootstrapping` | The target AWS account/region hasn't been CDK-bootstrapped. | Run `npm run bootstrap` once (step 5), then redeploy. |
+| Deploy throws `... is still the example value from .env.example` | `.env` still has a value from `.env.example`. | Replace it as described in step 3, then redeploy. |
 | Deploy throws `Missing RING_CLIENT_ID` (or another var) | `.env` isn't filled in. | Create `.env` from the example (`cp .env.example .env`, or `Copy-Item .env.example .env` on Windows) and set `RING_CLIENT_ID`, `RING_CLIENT_SECRET`, `RING_HMAC_SIGNING_KEY`, `SES_FROM_EMAIL`. |
 | Sign-in code email never arrives | SES is in the **sandbox**, which only delivers to verified recipients, or `SES_FROM_EMAIL` isn't verified. | Verify both the sender and the recipient in the SES console, or request SES production access. See [Going to production](#going-to-production). |
 | Account linking fails / "This link is missing information" | The Account Link / Token Exchange URLs in the Developer Portal don't match the deployed endpoints, or the HMAC signing key differs. | Re-copy the four stack outputs into the portal (step 6) and confirm `RING_HMAC_SIGNING_KEY` matches your app's signing key. |
@@ -247,7 +263,7 @@ npm run destroy
 | `npm audit` reports a moderate `minimatch` advisory | It's bundled inside `aws-cdk-lib`, which is used only to deploy (see the note at the end of this README). | Safe to ignore for this sample; it never reaches the deployed Lambda or the browser. Update `aws-cdk-lib` when AWS ships a fix. |
 | Dashboard says "Reconnect Watchtower to Ring" | Watchtower was removed in Ring My Apps, or the link expired after about 30 days without use (this sample refreshes tokens only when the dashboard is open). | Add Watchtower again from the Ring Appstore in the Ring app. |
 
-For anything deeper, check the Lambda's **CloudWatch Logs** (log group `/aws/lambda/watchtower-sample-api`); the backend logs linking, webhook, and streaming errors there.
+For anything deeper, check the Lambda's **CloudWatch Logs** (log group `/watchtower-sample/api`); the backend logs linking, webhook, and streaming errors there. Logs are kept for 30 days.
 
 ## How account linking works (passwordless, one-way)
 
@@ -359,8 +375,9 @@ only.
 
 - Webhook signatures are verified over the **raw request bytes** before any processing.
 - Nonces are compared with `crypto.timingSafeEqual` (constant time).
-- Dashboard API routes require a **signed, httpOnly session cookie** (HMAC-signed with `SESSION_SECRET`,
-  set at login, verified server-side on every `/api` route). The cookie is `httpOnly` + `Secure` so it
+- Dashboard API routes require a **signed, httpOnly session cookie** (HMAC-signed with a key derived
+  from `RING_CLIENT_SECRET`, or with `SESSION_SECRET` if you set one; set at login, verified
+  server-side on every `/api` route). The cookie is `httpOnly` + `Secure` so it
   isn't readable by JavaScript, and its signature is checked constant-time — a client can't forge a
   session or impersonate another user by supplying an id.
 - Access tokens auto-refresh (5-minute buffer) via the refresh token.
@@ -370,7 +387,7 @@ only.
   Calls made before the account ID is known use an app-level ID. Ring's firewall may answer
   requests without these headers with `406 Not Acceptable`. If you fork this app, change the
   `User-Agent` name in `backend/src/ringClient.js`.
-- Ring secrets and `SESSION_SECRET` live only in Lambda environment variables / your local `.env`;
+- Ring secrets live only in Lambda environment variables / your local `.env`;
   never commit `.env`.
 
 ## Ring UX design guide compliance
@@ -424,12 +441,14 @@ front of real users, work through these:
   identity (with DKIM) for `SES_FROM_EMAIL` rather than a single address. Watch your bounce/complaint
   rates. Consider SESv2 and a configuration set for event tracking.
 - **Sessions / auth.** The dashboard uses a **signed, httpOnly, Secure session cookie** (HMAC-signed
-  with `SESSION_SECRET`, set at login and verified server-side on every `/api` route via a single
-  `requireUser` chokepoint). That's a real, if minimal, session: the cookie can't be read by JS or
+  with a key derived from `RING_CLIENT_SECRET`, set at login and verified server-side on every `/api`
+  route via a single `requireUser` chokepoint). That's a real, if minimal, session: the cookie can't be read by JS or
   forged by a client. For production, harden it further — add **CSRF protection** (the cookie uses
   `SameSite=Lax` as a baseline; add CSRF tokens for state-changing requests), rotate/short-expire the
   token, and keep a **server-side session/revocation store** so you can invalidate sessions. A signed
-  JWT is a fine alternative to the HMAC cookie. Store `SESSION_SECRET` in Secrets Manager (see below).
+  JWT is a fine alternative to the HMAC cookie. To sign everyone out on demand, set your own
+  `SESSION_SECRET` (at least 32 random characters) and change it when needed; the derived key never
+  changes because the Ring client secret can't be rotated. Store it in Secrets Manager (see below).
 - **Sign-in code hardening.** Codes are 6 digits with a 10-minute expiry, a 5-attempt cap per code,
   and a one-minute resend cooldown per email. For production also add **per-IP rate limiting** (for
   example, API Gateway throttling or AWS WAF) and consider a longer code or lockout/backoff.
