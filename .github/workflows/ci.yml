@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Read-only token: this workflow only checks out and builds.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax-check backend and frontend sources
+        run: for f in backend/*.js backend/src/*.js backend/src/routes/*.js frontend/src/*.js; do node --check "$f"; done
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Type-check infra (CDK / TypeScript)
+        run: npm run build --workspace infra

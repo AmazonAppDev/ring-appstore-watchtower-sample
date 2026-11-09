@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# env / secrets
+.env
+*.pem
+*.csv
+
+# build output
+dist/
+frontend/dist/
+backend/dist/
+
+# CDK
+infra/cdk.out/
+cdk.out/
+*.d.ts
+*.js.map
+infra/lib/*.js
+infra/bin/*.js
+
+# local scratch files (not part of the sample)
+local/
+
+# logs / os
+*.log
+.DS_Store
+npm-debug.log*

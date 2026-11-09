@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="300 250 452 452">
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- No background tile — transparent -->
+
+  <!-- Radar / scan arcs -->
+  <g fill="none" stroke="url(#accent)" stroke-linecap="round" opacity="0.35">
+    <path d="M512 300 A 256 256 0 0 1 768 556" stroke-width="12"/>
+    <path d="M512 230 A 326 326 0 0 1 838 556" stroke-width="10" opacity="0.7"/>
+    <path d="M512 160 A 396 396 0 0 1 908 556" stroke-width="8" opacity="0.45"/>
+  </g>
+
+  <!-- Scan beam -->
+  <g opacity="0.5">
+    <polygon points="512,468 880,360 880,470 512,468" fill="url(#beam)"/>
+    <polygon points="512,468 880,470 880,580 512,468" fill="url(#beam)" opacity="0.6"/>
+  </g>
+
+  <!-- Watchtower -->
+  <g>
+    <!-- Tower body -->
+    <path d="M402 760 L622 760 L600 470 L424 470 Z" fill="#2b3650"/>
+    <!-- Cabin -->
+    <rect x="372" y="372" width="280" height="150" rx="22" fill="#34415c"/>
+    <!-- Cabin windows -->
+    <g fill="#1b2230">
+      <rect x="406" y="410" width="48" height="74" rx="10"/>
+      <rect x="488" y="410" width="48" height="74" rx="10"/>
+      <rect x="570" y="410" width="48" height="74" rx="10"/>
+    </g>
+    <!-- Roof -->
+    <path d="M352 372 L672 372 L512 286 Z" fill="url(#accent)"/>
+    <!-- Finial -->
+    <circle cx="512" cy="276" r="18" fill="#60a5fa"/>
+    <!-- Legs -->
+    <g stroke="#2b3650" stroke-width="26" stroke-linecap="round">
+      <line x1="430" y1="760" x2="384" y2="902"/>
+      <line x1="594" y1="760" x2="640" y2="902"/>
+    </g>
+    <!-- Cross brace -->
+    <line x1="414" y1="828" x2="610" y2="828" stroke="#2b3650" stroke-width="20" stroke-linecap="round"/>
+  </g>
+
+  <!-- LIVE dot -->
+  <circle cx="648" cy="356" r="30" fill="#dc2626"/>
+  <circle cx="648" cy="356" r="30" fill="none" stroke="#ff6b6b" stroke-width="6" opacity="0.5"/>
+  <circle cx="648" cy="356" r="13" fill="#ffffff" opacity="0.9"/>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "name": "watchtower-sample-backend",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Express backend (Lambda) for Watchtower, a Ring Appstore sample app.",
+  "license": "MIT-0",
+  "type": "module",
+  "main": "lambda.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.670.0",
+    "@aws-sdk/client-ses": "^3.670.0",
+    "@aws-sdk/lib-dynamodb": "^3.670.0",
+    "@codegenie/serverless-express": "^4.16.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.22.3"
+  }
+}

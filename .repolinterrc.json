@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/todogroup/repolinter/master/rulesets/schema.json",
+  "extends": "default",
+  "rules": {
+    "source-license-headers-exist": {
+      "level": "warning",
+      "rule": {
+        "type": "file-starts-with",
+        "options": {
+          "globsAll": [
+            "backend/**/*.js",
+            "frontend/src/**/*.js",
+            "frontend/*.config.js",
+            "infra/bin/**/*.ts",
+            "infra/lib/**/*.ts"
+          ],
+          "skip-binary-files": true,
+          "lineCount": 5,
+          "patterns": ["Copyright", "License"],
+          "flags": "i"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "watchtower-sample-app",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Watchtower — a Ring Appstore sample app. Account linking, webhooks, and a WebRTC/WHEP live camera grid for monitoring many Ring cameras on one screen, deployable to AWS with CDK.",
+  "license": "MIT-0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AmazonAppDev/ring-appstore-watchtower-sample.git"
+  },
+  "homepage": "https://github.com/AmazonAppDev/ring-appstore-watchtower-sample#readme",
+  "bugs": {
+    "url": "https://github.com/AmazonAppDev/ring-appstore-watchtower-sample/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend",
+    "infra"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace frontend",
+    "deploy": "npm run build && npm run deploy --workspace infra",
+    "destroy": "npm run destroy --workspace infra"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

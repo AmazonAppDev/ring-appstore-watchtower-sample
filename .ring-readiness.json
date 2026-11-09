@@ -1,0 +1,9 @@
+{
+  "acknowledged": [
+    {
+      "id": "TOK-02",
+      "reason": "Sample app: access tokens refresh on demand only, when the customer opens the dashboard. There's no scheduled job, so a customer who doesn't open the app for about 30 days must re-link. Production apps must add a daily refresh job for every linked customer.",
+      "reference": "README.md#going-to-production (Proactive token refresh)"
+    }
+  ]
+}

@@ -1,0 +1,517 @@
+:root {
+  --bg: #0e1116;
+  --panel: #171c24;
+  --border: #262d38;
+  --text: #e6e9ef;
+  --muted: #8b94a3;
+  --accent: #3b82f6;
+  --on: #22c55e;
+  --off: #6b7280;
+  --error: #f87171;
+}
+
+* { box-sizing: border-box; }
+
+/* Ensure the hidden attribute wins over absolute-positioned display rules */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.topbar h1 {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+main { padding: 20px; }
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 8vh;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.card h2 { margin-top: 0; }
+.card p { color: var(--muted); line-height: 1.5; }
+
+form { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+
+input {
+  padding: 11px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+}
+
+button {
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.error { color: var(--error); min-height: 20px; }
+
+.hint {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.status { color: var(--muted); margin-bottom: 14px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.tile {
+  position: relative;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+}
+
+.tile video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Frozen last-frame still shown when the live feed drops */
+.tile .still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(0.3) brightness(0.6);
+}
+
+/* LIVE badge — red pulsing dot, top-left */
+.live-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: rgba(220, 38, 38, 0.9);
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.7); }
+}
+
+/* Accessibility: respect reduced-motion — no pulsing, no spin. */
+@media (prefers-reduced-motion: reduce) {
+  .live-dot { animation: none; }
+  * { scroll-behavior: auto !important; }
+}
+
+/* Visible keyboard focus for all interactive elements. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* STILL badge — muted, top-left (replaces LIVE when frozen) */
+.still-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  background: rgba(107, 114, 128, 0.85);
+}
+
+/* Signal-lost overlay with reconnect */
+.tile-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+.overlay-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+.overlay-icon { color: #fca5a5; }
+.overlay-text {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 34ch;
+  padding: 0 16px;
+  text-align: center;
+  line-height: 1.45;
+}
+.reconnect-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 7px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+.reconnect-btn:hover { filter: brightness(1.1); }
+
+.tile-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  font-size: 13px;
+}
+
+.dot { width: 9px; height: 9px; border-radius: 50%; }
+.dot.on { background: var(--on); }
+.dot.off { background: var(--off); }
+
+.tile-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+.tile-msg:empty { display: none; }
+/* Longer guidance messages (offline, rate-limit countdown) wrap inside the tile. */
+.tile-msg { padding: 0 24px 36px; text-align: center; line-height: 1.45; }
+
+/* Offline camera: kept on the wall but visibly dimmed (dashed outline, muted
+   name and status), with the guidance message above. Text stays at full
+   contrast for readability; only decoration is dimmed. */
+.tile[data-state="offline"] {
+  background: #0b0d11;
+  border-style: dashed;
+  border-color: #3a4250;
+}
+.tile[data-state="offline"] .tile-bar { background: none; }
+.tile[data-state="offline"] .tile-bar .name { color: var(--muted); }
+.tile[data-state="offline"] .fs-btn { display: none; }
+
+/* Per-tile fullscreen button */
+.fs-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 7px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+.tile:hover .fs-btn,
+.fs-btn:focus { opacity: 1; }
+
+.tile.flash { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Fullscreen: let the video fill the screen */
+.tile:fullscreen { background: #000; }
+.tile:fullscreen video { object-fit: contain; }
+
+/* Top-right 3-dot (kebab) menu — matches the videowall overflow button */
+.menu { position: relative; margin-left: 8px; }
+
+.menu-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s, color 0.2s;
+}
+.menu-btn:hover { background: var(--bg); color: var(--text); }
+.menu-btn svg { display: block; }
+
+.menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 300px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  padding: 8px;
+  z-index: 20;
+}
+
+.menu-head {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 6px 8px;
+}
+
+/* Subscription summary (dropdown) */
+.sub-status { padding: 2px 8px 6px; }
+.sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+}
+.sub-detail { font-size: 12px; color: var(--muted); text-align: right; }
+.sub-muted { font-size: 13px; color: var(--muted); }
+.sub-hint { margin: 6px 0 2px; font-size: 12px; line-height: 1.45; color: var(--muted); }
+
+.device-list { list-style: none; margin: 0; padding: 0; }
+
+.device-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.device-row:hover { background: var(--bg); }
+
+.device-thumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  overflow: hidden;
+}
+.device-thumb svg { width: 26px; height: 26px; }
+.device-thumb .device-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.device-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-name {
+  flex: 1 1 auto;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.device-status { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.device-state { font-size: 12px; color: var(--muted); }
+.device-empty { color: var(--muted); padding: 10px 8px; font-size: 14px; }
+
+.menu-sep { height: 1px; background: var(--border); margin: 8px 4px; }
+
+.menu-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 10px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+.menu-item:hover { background: var(--bg); }
+.menu-item.danger { color: var(--error); }
+
+/* First-visit tutorial overlay */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+}
+.tutorial-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+.tutorial-card h2 { margin: 0 0 10px; }
+.tutorial-card p { color: var(--muted); line-height: 1.55; margin: 0; }
+.tut-skip {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: auto;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.tut-dots {
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  margin: 20px 0;
+}
+.tut-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.tut-dot.active { background: var(--accent); }
+.tut-actions { display: flex; gap: 10px; }
+.tut-actions button { flex: 1; }
+.tut-actions .tut-back[disabled] { opacity: 0.4; cursor: default; }
+
+/* Empty state (no connected devices) */
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  color: var(--muted);
+  padding: 10vh 20px;
+}
+.empty-state h2 { color: var(--text); margin: 6px 0 0; }
+.empty-state p { max-width: 460px; line-height: 1.5; }
+
+/* Account-linking confirmation screen */
+.confirm-check {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--on);
+}
+.confirm-device-list {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.confirm-device {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.confirm-device:last-child { border-bottom: none; }
+.confirm-device-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tile status label (text + color, not color alone) */
+.tile-bar .device-status { gap: 5px; }
+.tile-bar .device-state { font-size: 12px; color: var(--text); }
