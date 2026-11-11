@@ -868,11 +868,13 @@ function renderSubscription(sub) {
     rows.push(subRow("on", "Active", paid.expiresAt ? `Paid plan · through ${formatDate(paid.expiresAt)}` : "Paid plan"));
     hint = "Manage or cancel your plan in Ring My Apps. Cancellations take effect at the end of the billing period.";
   } else if (trial) {
-    // ACTIVE TRIAL — days left and a prompt to subscribe before it ends.
+    // ACTIVE TRIAL — days left, and what happens when it ends. Per Ring's
+    // Subscriptions API, a trial converts to a paid plan if auto-renewal is
+    // on; otherwise it ends. Either way, it's managed in Ring My Apps.
     const days = trial.expiresAt ? daysUntil(trial.expiresAt) : null;
     const left = days == null ? "Trial active" : days > 0 ? `${days} day${days === 1 ? "" : "s"} left` : "Ends today";
     rows.push(subRow("on", "Free trial", trial.expiresAt ? `${left} · ends ${formatDate(trial.expiresAt)}` : left));
-    hint = "Free trials don't turn into paid plans automatically. To keep using Watchtower, subscribe in the Ring Appstore before your trial ends.";
+    hint = "If auto-renewal is on, your free trial continues as a paid plan when it ends. To change or cancel it, go to Ring My Apps in the Ring app before your trial ends.";
   } else if (endedPaid) {
     // CANCELLED / ENDED — confirm it ended and when, with a path back.
     rows.push(subRow("off", "Ended", endedPaid.expiresAt ? `Plan ended ${formatDate(endedPaid.expiresAt)}` : "Plan ended"));
