@@ -415,7 +415,8 @@ What it implements:
   replayable any time via the menu's "How this works" item.
 - **Subscription & trial status**: the menu shows the customer's paid-subscription / trial state
   (via the Subscriptions Query API), including trial days remaining, and points to **Ring My Apps**
-  for managing the plan (and notes that free trials don't auto-convert).
+  for managing the plan (and notes that a trial continues as a paid plan when it ends if
+  auto-renewal is on).
 - **Silent token refresh**; tokens and internal IDs are never shown to the customer.
 - **In-app data deletion**: "Delete my account & data" in the menu deletes the stored token, user
   record and any pending sign-in code (Watchtower data only; it doesn't touch the Ring account). The
